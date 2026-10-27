@@ -146,7 +146,7 @@ Recommended production setup:
 6. Confirm the API allows the production console origin through CORS.
 7. Verify HTTPS, login, protected requests, SSE, deep links, exports, and logout.
 
-The detailed Namecheap and Vercel procedure is intentionally stored in [misc/deployment-namecheap-vercel.md](./misc/deployment-namecheap-vercel.md). The entire `misc/` directory is ignored and must not be committed.
+The detailed Namecheap and Vercel procedure is maintained locally in `misc/deployment-namecheap-vercel.md`. The entire `misc/` directory is ignored and must not be committed; deployment operators should retain or distribute that runbook through the approved private documentation channel.
 
 ## API integration
 
