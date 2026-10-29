@@ -1,7 +1,7 @@
 import type { ApiEvent } from './types';
 import { appConfig } from '../config';
 
-type StreamState = 'connected' | 'reconnecting' | 'disconnected';
+export type StreamState = 'connected' | 'reconnecting' | 'disconnected';
 
 type StreamCallbacks = {
   onEvent: (event: ApiEvent) => void;

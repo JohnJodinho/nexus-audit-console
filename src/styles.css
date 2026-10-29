@@ -115,3 +115,31 @@ tbody tr:hover { background: var(--surface-raised); }.numeric { font-family: 'DM
 .route-not-found { min-height: 360px; text-align: center; }.route-not-found p { margin: 8px 0 15px; color: var(--muted); }
 .url-cell { max-width: 470px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.finding-filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 17px 21px; border-bottom: 1px solid var(--border); }.finding-filters .select-field { min-width: 145px; }.finding-title, .finding-evidence { display: block; }.finding-title { color: var(--text); font-weight: 600; }.finding-evidence { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--faint); font-size: 10px; margin-top: 4px; }.severity { display: inline-block; padding: 4px 7px; border-radius: 4px; font-size: 10px; text-transform: capitalize; }.severity-critical { color: #ef9b8a; background: rgba(220, 111, 87, .14); }.severity-warning { color: var(--amber); background: rgba(230, 170, 76, .13); }.severity-info { color: #8dbad1; background: rgba(90, 150, 190, .13); }.status-select { display: inline-flex; align-items: center; gap: 5px; }.status-select select { border: 0; background: transparent; color: var(--muted); font-size: 11px; }.graph-empty { min-height: 430px; display: grid; place-content: center; justify-items: center; text-align: center; padding: 30px; }.graph-empty h2 { margin-top: 26px; }.graph-empty p { max-width: 410px; color: var(--muted); margin-top: 8px; font-size: 13px; }.graph-orbit { position: relative; width: 120px; height: 120px; border: 1px dashed var(--border-strong); border-radius: 50%; }.graph-orbit::after { content: ''; position: absolute; inset: 20px; border: 1px solid var(--accent); border-radius: 50%; opacity: .35; }.graph-orbit span { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 5px var(--accent-soft); }.graph-orbit span:nth-child(1) { top: 3px; left: 55px; }.graph-orbit span:nth-child(2) { right: 3px; top: 55px; }.graph-orbit span:nth-child(3) { bottom: 3px; left: 55px; }.graph-orbit span:nth-child(4) { left: 3px; top: 55px; }.json-preview { max-height: 330px; overflow: auto; margin: 0 21px 21px; padding: 16px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--muted); font: 11px/1.6 'DM Mono', monospace; white-space: pre-wrap; }
 @media (max-width: 700px) { .detail-heading { align-items: flex-start; flex-direction: column; }.detail-grid { grid-template-columns: repeat(2, 1fr); }.login-panel { padding: 28px 22px; }.panel-actions { flex-wrap: wrap; justify-content: flex-end; }.topbar-signout { display: none; } }
+
+/* Progress bar (live crawl progress) */
+.progress-card { display: flex; flex-direction: column; gap: 6px; margin: 14px 21px 0; }
+.progress-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.progress-track { height: 8px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width .2s ease; border-radius: 4px; }
+.progress-value { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--faint); text-align: right; }
+
+/* Stream connection indicator (per-crawl) */
+.stream-indicator { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
+.stream-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); box-shadow: 0 0 0 3px rgba(117, 106, 102, .12); }
+.stream-indicator.stream-connected { border-color: var(--green); color: var(--green); }
+.stream-indicator.stream-connected span { background: var(--green); box-shadow: 0 0 0 3px rgba(99, 209, 161, .12); }
+.stream-indicator.stream-reconnecting { border-color: var(--amber); color: var(--amber); }
+.stream-indicator.stream-reconnecting span { background: var(--amber); box-shadow: 0 0 0 3px rgba(230, 170, 76, .12); }
+.stream-indicator.stream-disconnected { border-color: #e58b78; color: #e58b78; }
+.stream-indicator.stream-disconnected span { background: #e58b78; box-shadow: 0 0 0 3px rgba(229, 139, 120, .12); }
+
+/* Live activity row (currently crawling URL) */
+.live-activity { display: flex; align-items: center; gap: 10px; margin: 14px 21px 0; padding: 10px 14px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 5px; font-size: 12px; color: var(--muted); }
+.live-activity .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 5px var(--accent-soft); animation: pulse 2s infinite; }
+.live-activity .live-url { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+
+/* Crawl detail metric overrides for live values */
+.detail-metric.live { position: relative; }
+.detail-metric.live strong { color: var(--accent); }
+
