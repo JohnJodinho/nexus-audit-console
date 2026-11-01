@@ -10,6 +10,7 @@ import { KpiStrip } from '../components/crawl/KpiStrip';
 import { Pagination } from '../components/crawl/Pagination';
 import { ErrorState, LoadingState } from '../components/feedback/States';
 import { statusLabels, isActiveStatus } from '../data/crawl-status';
+import { useRefreshScheduler } from '../lib/use-refresh-scheduler';
 
 export function CrawlsPage() {
   const { token, signOut } = useAuth();
@@ -31,7 +32,8 @@ export function CrawlsPage() {
     finally { setLoading(false); }
   }, [token, domain, status, page, signOut]);
 
-  useEffect(() => { void load(); }, [load]);
+  const { refresh, schedule } = useRefreshScheduler(load);
+  useEffect(() => { void refresh(); }, [domain, page, refresh, status, token]);
 
   // Update a single crawl row in place from SSE event data (no full reload)
   const updateCrawlRow = useCallback((crawlId: string, updates: Partial<CrawlListItem>) => {
@@ -50,7 +52,7 @@ export function CrawlsPage() {
     return startEventStream(token, {
       onEvent: (event) => {
         if (event.event === 'resync_required' || event.event === 'action.outcome') {
-          void load();
+          schedule();
           return;
         }
         const data = event.data as Record<string, unknown> | undefined;
@@ -69,7 +71,7 @@ export function CrawlsPage() {
           return;
         }
         if (event.event === 'page.available') {
-          void load();
+          schedule();
           return;
         }
         if (event.event === 'crawl.status_changed' && typeof data?.status === 'string') {
@@ -77,13 +79,13 @@ export function CrawlsPage() {
           return;
         }
         // Any other crawl.* event triggers a full refresh
-        if (event.event.startsWith('crawl.')) void load();
+        if (event.event === 'crawl.created' || event.event === 'crawl.deleted') schedule();
       },
       onStateChange: setStreamState,
       onUnauthorized: signOut,
     });
-  }, [token, load, updateCrawlRow, signOut]);
+  }, [token, schedule, updateCrawlRow, signOut]);
   const updateFilter = (key: string, value: string) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); next.delete('page'); setParams(next); };
   const totalPages = Math.max(1, Math.ceil((response?.total ?? 0) / limit));
-  return <div className="space-stack"><div className="page-heading"><div><div className="eyebrow">Overview</div><h1>Crawls</h1><p>Monitor web audits and review the issues they surface.</p></div><Link className="button button-primary" to="/crawls/new"><Plus size={16} />New crawl</Link></div><KpiStrip total={response?.total} active={response?.crawls.filter((crawl) => isActiveStatus(crawl.status)).length} /><section className="panel crawl-panel"><div className="panel-header"><div><h2>Recent crawl activity</h2><p>{response ? `${response.total} crawls matching the current scope` : 'Loading crawl inventory'}</p></div><div className="panel-actions"><div className={`stream-indicator stream-${streamState}`}><span />{streamState === 'connected' ? 'Live' : streamState === 'reconnecting' ? 'Reconnecting' : 'Offline'}</div><button className="button button-quiet" onClick={() => void load()} disabled={loading}>{loading ? <LoaderCircle className="spin" size={15} /> : null}Refresh</button></div></div><div className="filter-row"><label className="search-field"><Search size={16} /><input type="search" placeholder="Search domains" value={domain} onChange={(event) => updateFilter('domain', event.target.value)} /></label><label className="select-field"><select value={status} onChange={(event) => updateFilter('status', event.target.value)}><option value="">All statuses</option>{Object.entries(statusLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><ChevronDown size={15} /></label></div>{loading && !response ? <LoadingState /> : error ? <ErrorState message={error} onRetry={() => void load()} /> : <><CrawlTable rows={response?.crawls ?? []} /><Pagination page={page} totalPages={totalPages} onChange={(next) => { const query = new URLSearchParams(params); query.set('page', String(next)); setParams(query); }} /></>}</section></div>;
+  return <div className="space-stack"><div className="page-heading"><div><div className="eyebrow">Overview</div><h1>Crawls</h1><p>Monitor web audits and review the issues they surface.</p></div><Link className="button button-primary" to="/crawls/new"><Plus size={16} />New crawl</Link></div><KpiStrip total={response?.total} active={response?.crawls.filter((crawl) => isActiveStatus(crawl.status)).length} /><section className="panel crawl-panel"><div className="panel-header"><div><h2>Recent crawl activity</h2><p>{response ? `${response.total} crawls matching the current scope` : 'Loading crawl inventory'}</p></div><div className="panel-actions"><div className={`stream-indicator stream-${streamState}`}><span />{streamState === 'connected' ? 'Live' : streamState === 'reconnecting' ? 'Reconnecting' : 'Offline'}</div><button className="button button-quiet" onClick={() => void refresh()} disabled={loading}>{loading ? <LoaderCircle className="spin" size={15} /> : null}Refresh</button></div></div><div className="filter-row"><label className="search-field"><Search size={16} /><input type="search" placeholder="Search domains" value={domain} onChange={(event) => updateFilter('domain', event.target.value)} /></label><label className="select-field"><select value={status} onChange={(event) => updateFilter('status', event.target.value)}><option value="">All statuses</option>{Object.entries(statusLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><ChevronDown size={15} /></label></div>{loading && !response ? <LoadingState /> : !response && error ? <ErrorState message={error} onRetry={() => void refresh()} /> : <>{error && <div className="error-box" role="alert">{error}</div>}<CrawlTable rows={response?.crawls ?? []} /><Pagination page={page} totalPages={totalPages} onChange={(next) => { const query = new URLSearchParams(params); query.set('page', String(next)); setParams(query); }} /></>}</section></div>;
 }

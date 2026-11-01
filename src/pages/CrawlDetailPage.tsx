@@ -11,6 +11,7 @@ import { StatusBadge } from '../components/crawl/StatusBadge';
 import { ErrorState, LoadingState } from '../components/feedback/States';
 import { labelForStatus, isActiveStatus } from '../data/crawl-status';
 import { crawlProgress, processedPagesLabel, progressLabel } from '../lib/crawl-progress';
+import { useRefreshScheduler } from '../lib/use-refresh-scheduler';
 
 export function CrawlDetailPage() {
   const { crawlId } = useParams();
@@ -32,10 +33,12 @@ export function CrawlDetailPage() {
       ]);
       setCrawl(crawlResult);
       setCrawlStatus(statusResult);
+      setError('');
     }
     catch (value) { setError(value instanceof Error ? value.message : 'Unable to load crawl.'); }
   }, [token, crawlId, signOut]);
-  useEffect(() => { void load(); }, [load]);
+  const { refresh, schedule } = useRefreshScheduler(load);
+  useEffect(() => { void refresh(); }, [crawlId, refresh, token]);
 
   // SSE: live updates for this specific crawl
   useCrawlEventStream({
@@ -46,16 +49,30 @@ export function CrawlDetailPage() {
       if (!data) return;
 
       if (event.event === 'resync_required') {
-        void load();
+        void refresh();
         return;
       }
       if (event.event === 'action.outcome') {
-        void load();
+        void refresh();
         return;
       }
-      if (event.event === 'crawl.progress' || event.event === 'crawl.stats_updated' || event.event === 'crawl.status_changed') {
+      if (event.event === 'crawl.progress' || event.event === 'crawl.stats_updated') {
         if (typeof data.latest_url === 'string') setLiveUrl(data.latest_url);
-        void load();
+        setCrawlStatus((current) => current ? {
+          ...current,
+          ...(typeof data.progress === 'number' ? { progress: data.progress } : {}),
+          ...(typeof data.pages_discovered === 'number' ? { pages_discovered: data.pages_discovered } : {}),
+          ...(typeof data.pages_processed === 'number' ? { pages_processed: data.pages_processed } : {}),
+          ...(typeof data.pages_failed === 'number' ? { pages_failed: data.pages_failed } : {}),
+          ...(typeof data.findings_count === 'number' ? { findings_count: data.findings_count } : {}),
+        } : current);
+        return;
+      }
+      if (event.event === 'crawl.status_changed') {
+        if (typeof data.status === 'string') {
+          setCrawl((current) => current ? { ...current, status: data.status as CrawlListItem['status'] } : current);
+        }
+        schedule();
         return;
       }
       if (event.event === 'crawl.deleted') {
@@ -64,7 +81,6 @@ export function CrawlDetailPage() {
       }
 
       if (event.event === 'page.available') {
-        void load();
         if (typeof data.latest_url === 'string') setLiveUrl(data.latest_url);
         return;
       }
@@ -76,7 +92,7 @@ export function CrawlDetailPage() {
   async function runAction(name: CrawlAction) {
     if (!token || !crawlId) return;
     setAction(name); setError('');
-    try { await request(`/api/crawls/${encodeURIComponent(crawlId)}/${name}`, { method: 'POST' }, token, signOut); await load(); }
+    try { await request(`/api/crawls/${encodeURIComponent(crawlId)}/${name}`, { method: 'POST' }, token, signOut); await refresh(); }
     catch (value) { setError(value instanceof Error ? value.message : 'Action failed.'); }
     finally { setAction(''); }
   }
@@ -101,7 +117,7 @@ export function CrawlDetailPage() {
     } catch (value) { setError(value instanceof Error ? value.message : 'Export failed.'); }
     finally { setAction(''); }
   }
-  if (error && !crawl) return <ErrorState message={error} onRetry={() => void load()} />;
+  if (error && !crawl) return <ErrorState message={error} onRetry={() => void refresh()} />;
   if (!crawl) return <LoadingState />;
   const normalized = crawl.status.toLowerCase();
   const target = crawl.target_domain ?? crawl.target_url ?? crawlId;

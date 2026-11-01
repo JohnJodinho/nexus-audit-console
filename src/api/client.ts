@@ -92,11 +92,16 @@ async function parseResponse(response: Response): Promise<unknown> {
 
 function createRequestSignal(signal: AbortSignal | undefined) {
   const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), appConfig.apiTimeoutMs);
+  let timedOut = false;
+  const timeout = window.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, appConfig.apiTimeoutMs);
   const abort = () => controller.abort();
   signal?.addEventListener('abort', abort, { once: true });
   return {
     signal: controller.signal,
+    wasTimedOut: () => timedOut,
     cleanup: () => {
       window.clearTimeout(timeout);
       signal?.removeEventListener('abort', abort);
@@ -125,7 +130,7 @@ export async function request<T>(
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new ApiError('The API request was cancelled or timed out.', 0);
+      throw new ApiError(requestSignal.wasTimedOut() ? 'The API request timed out. Try again.' : 'The API request was cancelled.', 0);
     }
     throw new ApiError('The API could not be reached. Check the connection and try again.', 0);
   } finally {
