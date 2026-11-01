@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
+import { commitPattern, splitPatternInput } from '../../lib/url-patterns';
 
 type PatternEditorProps = {
   label: string;
@@ -8,35 +9,22 @@ type PatternEditorProps = {
   invalidPattern?: string;
 };
 
-function commitPattern(input: string, value: string[], onChange: (patterns: string[]) => void) {
-  const pattern = input.trim();
-  if (!pattern || value.includes(pattern)) return '';
-  onChange([...value, pattern]);
-  return '';
-}
-
 export function PatternEditor({ label, value, onChange, invalidPattern }: PatternEditorProps) {
   const [input, setInput] = useState('');
   function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Enter' || event.key === ',') {
       event.preventDefault();
-      setInput(commitPattern(input, value, onChange));
+      const next = commitPattern(input, value);
+      if (next !== value) onChange(next);
+      setInput('');
     } else if (event.key === 'Backspace' && !input && value.length > 0) {
       onChange(value.slice(0, -1));
     }
   }
   function onChangeInput(next: string) {
-    const parts = next.split(',');
-    if (parts.length === 1) {
-      setInput(next);
-      return;
-    }
-    let remaining = parts.pop() ?? '';
-    parts.forEach((part) => {
-      const committed = commitPattern(part, value, onChange);
-      if (committed === '') remaining = remaining.trim();
-    });
-    setInput(remaining);
+    const result = splitPatternInput(next, value);
+    onChange(result.value);
+    setInput(result.remainder);
   }
   return (
     <div className="pattern-editor">

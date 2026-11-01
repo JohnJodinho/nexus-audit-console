@@ -53,6 +53,10 @@ export function startEventStream(token: string, callbacks: StreamCallbacks, craw
         buffer = frames.pop() ?? '';
         frames.forEach((frame) => {
           const parsed = parseSseFrame(frame);
+          if (!parsed && frame.includes('data:')) {
+            callbacks.onError?.('The event stream returned malformed event data.');
+            return;
+          }
           if (!parsed || (parsed.id && seenEventIds.has(parsed.id))) return;
           if (parsed.id) { lastEventId = parsed.id; seenEventIds.add(parsed.id); }
           if (parsed.event === 'resync_required') lastEventId = undefined;

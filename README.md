@@ -3,7 +3,7 @@
 ![Nexus Audit Console](https://img.shields.io/badge/Joule%20Dynamics-Nexus%20Audit%20Console-e45bdd)
 ![React](https://img.shields.io/badge/React-19-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
-![Vite](https://img.shields.io/badge/Vite-5-646cff)
+![Vite](https://img.shields.io/badge/Vite-8-646cff)
 
 Nexus Audit Console is the operator-facing web application for monitoring website crawls, reviewing audit findings, inspecting page coverage, and viewing crawl operations data. It is built for Joule Dynamics and communicates with the Nexus Query API over authenticated REST and SSE connections.
 

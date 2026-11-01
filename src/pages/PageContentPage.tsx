@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { downloadPageContent, getPageContent } from '../api/client';
 import { useAuth } from '../auth';
 import { ErrorState, LoadingState } from '../components/feedback/States';
+import { filenameFromContentDisposition } from '../lib/downloads';
 
 export function PageContentPage() {
   const { crawlId = '', pageId = '' } = useParams();
@@ -25,7 +26,7 @@ export function PageContentPage() {
       const result = await downloadPageContent(token, crawlId, Number(pageId), format, includeMetadata, signOut);
       const anchor = document.createElement('a');
       anchor.href = URL.createObjectURL(result.blob);
-      anchor.download = `${crawlId}-page-${pageId}.${format === 'markdown' ? 'md' : format}`;
+      anchor.download = filenameFromContentDisposition(result.contentDisposition, `${crawlId}-page-${pageId}.${format === 'markdown' ? 'md' : format}`);
       anchor.click();
       URL.revokeObjectURL(anchor.href);
     } catch (value) { setError(value instanceof Error ? value.message : 'Unable to download content.'); }

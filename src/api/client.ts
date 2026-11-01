@@ -23,6 +23,19 @@ import { appConfig } from '../config';
 
 const API_BASE_URL = appConfig.apiBaseUrl;
 
+function messageForStatus(status: number, fallback: string) {
+  const messages: Record<number, string> = {
+    403: 'You do not have permission to perform this action.',
+    404: 'The requested resource was not found.',
+    409: 'The request conflicts with the current server state.',
+    413: 'The request is too large.',
+    422: fallback,
+    429: 'Too many requests. Wait briefly and try again.',
+    503: 'The API is temporarily unavailable. Try again shortly.',
+  };
+  return messages[status] ?? fallback;
+}
+
 export class ApiError extends Error {
   status: number;
   detail?: unknown;
@@ -31,14 +44,17 @@ export class ApiError extends Error {
   pattern?: string;
   index?: number;
   requestId?: string;
+  userMessage: string;
 
   constructor(message: string, status: number, detail?: unknown, metadata: Partial<Pick<ApiError, 'code' | 'field' | 'pattern' | 'index' | 'requestId'>> = {}) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.detail = detail;
+    this.userMessage = messageForStatus(status, message);
     Object.assign(this, metadata);
   }
+
 }
 
 function getDetailMessage(detail: unknown): string | undefined {
