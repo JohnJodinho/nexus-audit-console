@@ -7,6 +7,7 @@ type StreamCallbacks = {
   onEvent: (event: ApiEvent) => void;
   onStateChange: (state: StreamState) => void;
   onUnauthorized: () => void;
+  onError?: (message: string) => void;
 };
 
 export function parseSseFrame(frame: string): ApiEvent | undefined {
@@ -32,6 +33,7 @@ export function startEventStream(token: string, callbacks: StreamCallbacks, craw
   let lastEventId: string | undefined;
   let stopped = false;
   let retryDelay = 1000;
+  const seenEventIds = new Set<string>();
 
   const connect = async () => {
     if (stopped) return;
@@ -65,7 +67,11 @@ export function startEventStream(token: string, callbacks: StreamCallbacks, craw
         frames.forEach((frame) => {
           const parsed = parseSseFrame(frame);
           if (!parsed) return;
-          if (parsed.id) lastEventId = parsed.id;
+          if (parsed.id && seenEventIds.has(parsed.id)) return;
+          if (parsed.id) {
+            lastEventId = parsed.id;
+            seenEventIds.add(parsed.id);
+          }
           if (parsed.event === 'resync_required') {
             lastEventId = undefined;
             callbacks.onEvent(parsed);
@@ -75,8 +81,9 @@ export function startEventStream(token: string, callbacks: StreamCallbacks, craw
         });
       }
       if (!stopped) throw new Error('Event stream ended');
-    } catch {
+    } catch (error) {
       if (stopped) return;
+      callbacks.onError?.(error instanceof Error ? error.message : 'The event stream failed.');
       callbacks.onStateChange('reconnecting');
       window.setTimeout(connect, retryDelay);
       retryDelay = Math.min(retryDelay * 2, 30000);

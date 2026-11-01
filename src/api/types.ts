@@ -151,3 +151,28 @@ export type GraphResponse = {
   nodes: Array<Record<string, unknown>>;
   edges: Array<Record<string, unknown>>;
 };
+
+export type JsonObject = Record<string, unknown>;
+export type PageContentResponse = unknown;
+export type ExportFormat = 'markdown' | 'html' | 'text';
+export type ExportRequest = {
+  scope?: string | null;
+  format?: ExportFormat;
+  include_patterns?: string[];
+  exclude_patterns?: string[];
+  exclude_resource_types?: Array<'image' | 'document' | 'stylesheet' | 'script' | 'font' | 'media'>;
+  include_assets?: boolean;
+  include_metadata?: boolean;
+  include_manifest?: boolean;
+};
+export type JobResponse = {
+  job_id: string;
+  crawl_id: string;
+  status: string;
+};
+export type ExportStatusResponse = JobResponse & {
+  result?: JsonObject;
+  error_code?: string | null;
+  error_message?: string | null;
+};
+export type PreviewStatusResponse = ExportStatusResponse;
