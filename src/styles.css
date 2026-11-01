@@ -121,7 +121,9 @@ tbody tr:hover { background: var(--surface-raised); }.numeric { font-family: 'DM
 .progress-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .progress-track { height: 8px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width .2s ease; border-radius: 4px; }
+.progress-indeterminate { width: 38%; animation: progress-slide 1.4s ease-in-out infinite; }
 .progress-value { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--faint); text-align: right; }
+@keyframes progress-slide { 0% { transform: translateX(-110%); } 50% { transform: translateX(165%); } 100% { transform: translateX(280%); } }
 
 /* Stream connection indicator (per-crawl) */
 .stream-indicator { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
@@ -142,4 +144,3 @@ tbody tr:hover { background: var(--surface-raised); }.numeric { font-family: 'DM
 /* Crawl detail metric overrides for live values */
 .detail-metric.live { position: relative; }
 .detail-metric.live strong { color: var(--accent); }
-

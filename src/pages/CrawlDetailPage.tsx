@@ -10,6 +10,7 @@ import { ProgressBar } from '../components/crawl/ProgressBar';
 import { StatusBadge } from '../components/crawl/StatusBadge';
 import { ErrorState, LoadingState } from '../components/feedback/States';
 import { labelForStatus, isActiveStatus } from '../data/crawl-status';
+import { crawlProgress, processedPagesLabel, progressLabel } from '../lib/crawl-progress';
 
 export function CrawlDetailPage() {
   const { crawlId } = useParams();
@@ -49,23 +50,24 @@ export function CrawlDetailPage() {
         return;
       }
 
-      // Optimistic updates from enriched event payloads
+      if (event.event === 'page.available') {
+        void load();
+        if (typeof data.latest_url === 'string') setLiveUrl(data.latest_url);
+        return;
+      }
+
       setCrawl(prev => {
         if (!prev) return prev;
         const next: CrawlListItem = { ...prev };
 
         if (event.event === 'crawl.progress' || event.event === 'crawl.stats_updated') {
+          if (typeof data.progress === 'number') next.progress = data.progress;
+          if (typeof data.pages_discovered === 'number') next.pages_discovered = data.pages_discovered;
           if (typeof data.pages_processed === 'number') next.pages_processed = data.pages_processed;
-          if (typeof data.pages_discovered === 'number') next.pages_processed = (prev.pages_processed ?? 0) + data.pages_discovered;
           if (typeof data.pages_failed === 'number') next.pages_failed = data.pages_failed;
           if (typeof data.findings_count === 'number') next.findings_count = data.findings_count;
           if (typeof data.status === 'string') next.status = data.status as CrawlListItem['status'];
           if (typeof data.latest_url === 'string') setLiveUrl(data.latest_url);
-        }
-        if (event.event === 'page.available') {
-          next.pages_processed = (prev.pages_processed ?? 0) + 1;
-          if (typeof data.latest_url === 'string') setLiveUrl(data.latest_url);
-          if (typeof data.findings_count === 'number') next.findings_count = data.findings_count;
         }
         if (event.event === 'crawl.status_changed' && typeof data.status === 'string') {
           next.status = data.status as CrawlListItem['status'];
@@ -111,6 +113,7 @@ export function CrawlDetailPage() {
   const target = crawl.target_domain ?? crawl.target_url ?? crawlId;
   const canPause = ['queued', 'running'].includes(normalized);
   const canResume = normalized === 'paused';
+  const progress = crawlProgress(crawl);
   return (
     <div className="space-stack">
       <Link to="/crawls" className="back-link"><ArrowLeft size={15} />Back to crawls</Link>
@@ -118,9 +121,10 @@ export function CrawlDetailPage() {
       {isActiveStatus(crawl.status) && (
         <>
           <ProgressBar
-            progress={crawl.pages_processed && crawl.pages_processed > 0 ? (crawl.pages_processed / Math.max(1, (crawl as unknown as { max_pages?: number }).max_pages ?? 10)) : undefined}
-            label="Crawl progress"
-            value={String(crawl.pages_processed ?? '—')}
+            progress={progress}
+            label={progressLabel(crawl)}
+            value={processedPagesLabel(crawl)}
+            indeterminate={progress === null}
           />
           {liveUrl && (
             <div className="live-activity"><span className="live-dot" /><span>Currently crawling</span><span className="live-url">{liveUrl}</span></div>

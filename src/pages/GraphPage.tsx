@@ -14,6 +14,7 @@ export function GraphPage() {
   const [streamState, setStreamState] = useState<'connected' | 'reconnecting' | 'disconnected'>('disconnected');
   const load = useCallback(async () => {
     if (!token) return;
+    setError('');
     try { setGraph(await getGraph(token, crawlId, signOut)); } catch (value) { setError(value instanceof Error ? value.message : 'Unable to load graph.'); }
   }, [token, crawlId, signOut]);
   useEffect(() => { void load(); }, [load]);
@@ -24,7 +25,7 @@ export function GraphPage() {
     crawlId,
     onEvent: (event) => {
       if (event.event === 'resync_required') { void load(); return; }
-      if (event.event === 'page.available' || event.event === 'crawl.completed' || event.event === 'crawl.deleted') {
+      if (event.event === 'page.available' || event.event === 'crawl.stats_updated' || event.event === 'crawl.completed' || event.event === 'crawl.deleted') {
         void load();
         return;
       }

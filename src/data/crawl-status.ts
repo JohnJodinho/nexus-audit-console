@@ -17,5 +17,5 @@ export function labelForStatus(status: CrawlStatus) {
 }
 
 export function isActiveStatus(status: CrawlStatus) {
-  return ['queued', 'running', 'paused'].includes(status.toLowerCase());
+  return ['queued', 'running', 'paused', 'draining', 'consolidating'].includes(status.toLowerCase());
 }

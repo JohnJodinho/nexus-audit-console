@@ -17,9 +17,14 @@ export type CrawlListItem = {
   status: CrawlStatus;
   created_at?: string | null;
   updated_at?: string | null;
+  progress?: number | null;
+  pages_discovered?: number | null;
   pages_processed?: number | null;
   pages_failed?: number | null;
+  pages_total?: number | null;
+  max_pages?: number | null;
   findings_count?: number | null;
+  next_recommended_action?: 'wait' | 'retrieve' | 'none' | string | null;
 };
 
 export type CrawlListResponse = {

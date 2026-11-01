@@ -50,7 +50,7 @@ export function FindingsPage() {
           return;
         }
       }
-      if (event.event === 'page.available' || event.event === 'crawl.completed' || event.event === 'crawl.deleted') {
+      if (event.event === 'finding.available' || event.event === 'page.available' || event.event === 'crawl.completed' || event.event === 'crawl.deleted') {
         void load();
         return;
       }

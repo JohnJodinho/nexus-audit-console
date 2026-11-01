@@ -15,6 +15,7 @@ export function OperationsPage() {
   const [streamState, setStreamState] = useState<'connected' | 'reconnecting' | 'disconnected'>('disconnected');
   const load = useCallback(async () => {
     if (!token) return;
+    setError('');
     try { const [telemetryResult, dlqResult] = await Promise.all([getTelemetry(token, crawlId, signOut), getDlq(token, crawlId, signOut)]); setTelemetry(telemetryResult); setDlq(dlqResult); }
     catch (value) { setError(value instanceof Error ? value.message : 'Unable to load operations data.'); }
   }, [token, crawlId, signOut]);
@@ -26,7 +27,7 @@ export function OperationsPage() {
     crawlId,
     onEvent: (event) => {
       if (event.event === 'resync_required') { void load(); return; }
-      if (event.event === 'page.available' || event.event === 'crawl.completed' || event.event === 'crawl.deleted') {
+      if (event.event === 'page.available' || event.event === 'crawl.stats_updated' || event.event === 'crawl.completed' || event.event === 'crawl.deleted') {
         void load();
         return;
       }

@@ -59,8 +59,9 @@ export function CrawlsPage() {
 
         if (event.event === 'crawl.progress' || event.event === 'crawl.stats_updated') {
           const updates: Partial<CrawlListItem> = {};
+          if (typeof data?.progress === 'number') updates.progress = data.progress;
+          if (typeof data?.pages_discovered === 'number') updates.pages_discovered = data.pages_discovered;
           if (typeof data?.pages_processed === 'number') updates.pages_processed = data.pages_processed;
-          if (typeof data?.pages_discovered === 'number') updates.pages_processed = (response?.crawls.find(c => c.id === crawlId)?.pages_processed ?? 0) + data.pages_discovered;
           if (typeof data?.pages_failed === 'number') updates.pages_failed = data.pages_failed;
           if (typeof data?.findings_count === 'number') updates.findings_count = data.findings_count;
           if (typeof data?.status === 'string') updates.status = data.status as CrawlListItem['status'];
@@ -68,11 +69,7 @@ export function CrawlsPage() {
           return;
         }
         if (event.event === 'page.available') {
-          const current = response?.crawls.find(c => c.id === crawlId);
-          updateCrawlRow(crawlId, {
-            pages_processed: (current?.pages_processed ?? 0) + 1,
-            ...(typeof data?.findings_count === 'number' ? { findings_count: data.findings_count } : {}),
-          });
+          void load();
           return;
         }
         if (event.event === 'crawl.status_changed' && typeof data?.status === 'string') {
@@ -85,7 +82,7 @@ export function CrawlsPage() {
       onStateChange: setStreamState,
       onUnauthorized: signOut,
     });
-  }, [token, load, response, updateCrawlRow, signOut]);
+  }, [token, load, updateCrawlRow, signOut]);
   const updateFilter = (key: string, value: string) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); next.delete('page'); setParams(next); };
   const totalPages = Math.max(1, Math.ceil((response?.total ?? 0) / limit));
   return <div className="space-stack"><div className="page-heading"><div><div className="eyebrow">Overview</div><h1>Crawls</h1><p>Monitor web audits and review the issues they surface.</p></div><Link className="button button-primary" to="/crawls/new"><Plus size={16} />New crawl</Link></div><KpiStrip total={response?.total} active={response?.crawls.filter((crawl) => isActiveStatus(crawl.status)).length} /><section className="panel crawl-panel"><div className="panel-header"><div><h2>Recent crawl activity</h2><p>{response ? `${response.total} crawls matching the current scope` : 'Loading crawl inventory'}</p></div><div className="panel-actions"><div className={`stream-indicator stream-${streamState}`}><span />{streamState === 'connected' ? 'Live' : streamState === 'reconnecting' ? 'Reconnecting' : 'Offline'}</div><button className="button button-quiet" onClick={() => void load()} disabled={loading}>{loading ? <LoaderCircle className="spin" size={15} /> : null}Refresh</button></div></div><div className="filter-row"><label className="search-field"><Search size={16} /><input type="search" placeholder="Search domains" value={domain} onChange={(event) => updateFilter('domain', event.target.value)} /></label><label className="select-field"><select value={status} onChange={(event) => updateFilter('status', event.target.value)}><option value="">All statuses</option>{Object.entries(statusLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><ChevronDown size={15} /></label></div>{loading && !response ? <LoadingState /> : error ? <ErrorState message={error} onRetry={() => void load()} /> : <><CrawlTable rows={response?.crawls ?? []} /><Pagination page={page} totalPages={totalPages} onChange={(next) => { const query = new URLSearchParams(params); query.set('page', String(next)); setParams(query); }} /></>}</section></div>;
