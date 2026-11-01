@@ -241,6 +241,11 @@ export function getPageContent(token: string, crawlId: string, pageId: number, o
   return request<PageContentResponse>(`${crawlPath(crawlId, `/pages/${pageId}/content`)}?${query}`, { signal: options.signal }, token, onUnauthorized);
 }
 
+export function downloadPageContent(token: string, crawlId: string, pageId: number, format: string, includeMetadata: boolean, onUnauthorized?: () => void) {
+  const query = new URLSearchParams({ format, download: 'true', include_metadata: String(includeMetadata) });
+  return requestBlob(`${crawlPath(crawlId, `/pages/${pageId}/content`)}?${query}`, {}, token, onUnauthorized);
+}
+
 export function createExport(token: string, crawlId: string, payload: ExportRequest, onUnauthorized?: () => void) {
   return request<JobResponse>(crawlPath(crawlId, '/exports'), { method: 'POST', body: JSON.stringify(payload) }, token, onUnauthorized);
 }

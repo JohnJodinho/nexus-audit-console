@@ -1,8 +1,8 @@
-const crawlChildRoutes = new Set(['pages', 'findings', 'graph', 'operations']);
+const crawlChildRoutes = new Set(['pages', 'findings', 'graph', 'operations', 'paths', 'contacts', 'search', 'statistics', 'failures', 'artifacts', 'exports', 'url-rules']);
 
 export type CrawlRouteContext = {
   crawlId: string;
-  section: 'summary' | 'pages' | 'findings' | 'graph' | 'operations';
+  section: 'summary' | 'pages' | 'findings' | 'graph' | 'operations' | 'paths' | 'contacts' | 'search' | 'statistics' | 'failures' | 'artifacts' | 'exports' | 'url-rules';
 };
 
 export function getCrawlRouteContext(pathname: string): CrawlRouteContext | null {

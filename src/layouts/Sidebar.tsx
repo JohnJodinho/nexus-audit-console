@@ -19,9 +19,9 @@ export function Sidebar({ open, onClose, onSignOut }: { open: boolean; onClose: 
             <NavItem to="/crawls" label="Crawls" icon={Globe2} active={location.pathname.startsWith('/crawls')} />
           </div>
           {crawlContext && <><div className="nav-section-label">Current crawl</div><div className="nav-group nav-subgroup">{[
-            { label: 'Summary', icon: BarChart3 }, { label: 'Pages', icon: FileSearch }, { label: 'Findings', icon: ShieldAlert }, { label: 'Graph', icon: Activity }, { label: 'Operations', icon: Gauge },
+            { label: 'Summary', icon: BarChart3 }, { label: 'Pages', icon: FileSearch }, { label: 'Findings', icon: ShieldAlert }, { label: 'Graph', icon: Activity }, { label: 'Operations', icon: Gauge }, { label: 'Paths', icon: Globe2 }, { label: 'Contacts', icon: FileSearch }, { label: 'Search', icon: FileSearch }, { label: 'Statistics', icon: BarChart3 }, { label: 'Failures', icon: ShieldAlert }, { label: 'Artifacts', icon: FileSearch }, { label: 'Exports', icon: ArrowUpRight }, { label: 'URL rules', icon: Activity },
           ].map(({ label, icon: Icon }, index) => {
-            const section = index === 0 ? 'summary' : label.toLowerCase() as 'pages' | 'findings' | 'graph' | 'operations';
+            const section = index === 0 ? 'summary' : label === 'URL rules' ? 'url-rules' : label.toLowerCase() as 'pages' | 'findings' | 'graph' | 'operations' | 'paths' | 'contacts' | 'search' | 'statistics' | 'failures' | 'artifacts' | 'exports';
             return <Link className={crawlContext.section === section ? 'nav-item nav-item-sub active-sub' : 'nav-item nav-item-sub'} to={crawlSectionPath(crawlContext.crawlId, section)} key={label}><Icon size={16} />{label}</Link>;
           })}</div></>}
         </nav>
