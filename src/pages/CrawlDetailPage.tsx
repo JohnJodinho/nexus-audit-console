@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, LoaderCircle } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { exportCrawl, request } from '../api/client';
+import { exportCrawl, getCrawl, getCrawlStatus, request } from '../api/client';
 import { useCrawlEventStream } from '../api/use-crawl-event-stream';
-import type { CrawlListItem } from '../api/types';
+import type { CrawlListItem, CrawlStatusResponse } from '../api/types';
 import { useAuth } from '../auth';
 import { ActionButton, type CrawlAction } from '../components/crawl/ActionButton';
 import { ProgressBar } from '../components/crawl/ProgressBar';
@@ -16,6 +16,7 @@ export function CrawlDetailPage() {
   const { crawlId } = useParams();
   const { token, signOut } = useAuth();
   const [crawl, setCrawl] = useState<CrawlListItem | null>(null);
+  const [crawlStatus, setCrawlStatus] = useState<CrawlStatusResponse | null>(null);
   const [error, setError] = useState('');
   const [action, setAction] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -24,7 +25,14 @@ export function CrawlDetailPage() {
 
   const load = useCallback(async () => {
     if (!token || !crawlId) return;
-    try { setCrawl(await request<CrawlListItem>(`/api/crawls/${encodeURIComponent(crawlId)}`, {}, token, signOut)); }
+    try {
+      const [crawlResult, statusResult] = await Promise.all([
+        getCrawl(token, crawlId, signOut),
+        getCrawlStatus(token, crawlId, signOut),
+      ]);
+      setCrawl(crawlResult);
+      setCrawlStatus(statusResult);
+    }
     catch (value) { setError(value instanceof Error ? value.message : 'Unable to load crawl.'); }
   }, [token, crawlId, signOut]);
   useEffect(() => { void load(); }, [load]);
@@ -45,6 +53,11 @@ export function CrawlDetailPage() {
         void load();
         return;
       }
+      if (event.event === 'crawl.progress' || event.event === 'crawl.stats_updated' || event.event === 'crawl.status_changed') {
+        if (typeof data.latest_url === 'string') setLiveUrl(data.latest_url);
+        void load();
+        return;
+      }
       if (event.event === 'crawl.deleted') {
         window.location.assign('/crawls');
         return;
@@ -56,25 +69,6 @@ export function CrawlDetailPage() {
         return;
       }
 
-      setCrawl(prev => {
-        if (!prev) return prev;
-        const next: CrawlListItem = { ...prev };
-
-        if (event.event === 'crawl.progress' || event.event === 'crawl.stats_updated') {
-          if (typeof data.progress === 'number') next.progress = data.progress;
-          if (typeof data.pages_discovered === 'number') next.pages_discovered = data.pages_discovered;
-          if (typeof data.pages_processed === 'number') next.pages_processed = data.pages_processed;
-          if (typeof data.pages_failed === 'number') next.pages_failed = data.pages_failed;
-          if (typeof data.findings_count === 'number') next.findings_count = data.findings_count;
-          if (typeof data.status === 'string') next.status = data.status as CrawlListItem['status'];
-          if (typeof data.latest_url === 'string') setLiveUrl(data.latest_url);
-        }
-        if (event.event === 'crawl.status_changed' && typeof data.status === 'string') {
-          next.status = data.status as CrawlListItem['status'];
-        }
-
-        return next;
-      });
     },
     onStateChange: setStreamState,
     onUnauthorized: signOut,
@@ -113,7 +107,8 @@ export function CrawlDetailPage() {
   const target = crawl.target_domain ?? crawl.target_url ?? crawlId;
   const canPause = ['queued', 'running'].includes(normalized);
   const canResume = normalized === 'paused';
-  const progress = crawlProgress(crawl);
+  const progressSource = { ...crawl, ...crawlStatus };
+  const progress = crawlProgress(progressSource);
   return (
     <div className="space-stack">
       <Link to="/crawls" className="back-link"><ArrowLeft size={15} />Back to crawls</Link>
@@ -123,7 +118,7 @@ export function CrawlDetailPage() {
           <ProgressBar
             progress={progress}
             label={progressLabel(crawl)}
-            value={processedPagesLabel(crawl)}
+            value={processedPagesLabel(progressSource)}
             indeterminate={progress === null}
           />
           {liveUrl && (

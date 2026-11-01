@@ -2,11 +2,13 @@ import type {
   CrawlCreateRequest,
   CrawlCreateResponse,
   CrawlListResponse,
+  CrawlResponse,
+  CrawlStatusResponse,
   LoginResponse,
   CrawlPage,
   Finding,
   PaginatedResponse,
-  Summary,
+  CrawlSummary,
   Telemetry,
   DlqResponse,
   GraphResponse,
@@ -105,12 +107,20 @@ export function createCrawl(token: string, payload: CrawlCreateRequest, onUnauth
   }, token, onUnauthorized);
 }
 
+export function getCrawl(token: string, crawlId: string, onUnauthorized?: () => void) {
+  return request<CrawlResponse>(`/api/crawls/${encodeURIComponent(crawlId)}`, {}, token, onUnauthorized);
+}
+
+export function getCrawlStatus(token: string, crawlId: string, onUnauthorized?: () => void) {
+  return request<CrawlStatusResponse>(`/api/crawls/${encodeURIComponent(crawlId)}/status`, {}, token, onUnauthorized);
+}
+
 export function refreshTokenSafe(token: string, onUnauthorized?: () => void) {
   return request<unknown>('/api/crawls?limit=1&offset=0', {}, token, onUnauthorized);
 }
 
 export function getSummary(token: string, crawlId: string, onUnauthorized?: () => void) {
-  return request<Summary>(`/api/crawls/${encodeURIComponent(crawlId)}/summary`, {}, token, onUnauthorized);
+  return request<CrawlSummary>(`/api/crawls/${encodeURIComponent(crawlId)}/summary`, {}, token, onUnauthorized);
 }
 
 export function listPages(token: string, crawlId: string, page: number, perPage: number, hasFindings: boolean, onUnauthorized?: () => void) {
@@ -142,7 +152,7 @@ export function getGraph(token: string, crawlId: string, onUnauthorized?: () => 
 }
 
 export async function exportCrawl(token: string, crawlId: string, format: 'json' | 'markdown', onUnauthorized?: () => void) {
-  return request<{ content?: string }>(`/api/crawls/${encodeURIComponent(crawlId)}/export?format=${format}`, {}, token, onUnauthorized);
+  return request<{ crawl_id: string; format: 'json' | 'markdown'; generated_at: string; content: string }>(`/api/crawls/${encodeURIComponent(crawlId)}/export?format=${format}`, {}, token, onUnauthorized);
 }
 
 export { API_BASE_URL };

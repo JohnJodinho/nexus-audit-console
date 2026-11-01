@@ -20,8 +20,8 @@ export function NewCrawlPage() {
     try {
       const config = { ...(maxPages ? { max_pages: Number(maxPages) } : {}), ...(maxDepth ? { max_depth: Number(maxDepth) } : {}), worker_count: Number(workerCount) };
       const created = await createCrawl(token, { url: url.trim(), config }, signOut);
-      setResult(created.duplicate ? 'A crawl for this request already exists.' : created.message ?? 'Crawl created successfully.');
-      if (created.id ?? created.crawl_id) window.setTimeout(() => navigate(`/crawls/${created.id ?? created.crawl_id}`), 700);
+      setResult(created.is_duplicate ? 'A crawl for this request already exists.' : created.message);
+      window.setTimeout(() => navigate(`/crawls/${created.crawl_id}`), 700);
     } catch (value) { setError(value instanceof Error ? value.message : 'Unable to create crawl.'); }
     finally { setSubmitting(false); }
   }
